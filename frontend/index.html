@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IPO审核动态查询系统</title>
+    <link rel="stylesheet" href="https://unpkg.com/element-ui/lib/theme-chalk/index.css">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Microsoft YaHei', sans-serif;
+            background-color: #f5f7fa;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px 0;
+            text-align: center;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 2.5em;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .nav-tabs {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .content-area {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            min-height: 500px;
+        }
+        .chart-container {
+            height: 400px;
+            margin: 20px 0;
+        }
+        .search-box {
+            margin: 20px 0;
+        }
+        .case-item {
+            border: 1px solid #e4e7ed;
+            border-radius: 4px;
+            padding: 15px;
+            margin-bottom: 15px;
+            transition: all 0.3s ease;
+        }
+        .case-item:hover {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            transform: translateY(-2px);
+        }
+        .status-badge {
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        .status-approved {
+            background-color: #67c23a;
+            color: white;
+        }
+        .status-rejected {
+            background-color: #f56c6c;
+            color: white;
+        }
+        .status-reviewing {
+            background-color: #e6a23c;
+            color: white;
+        }
+        .keyword-tag {
+            display: inline-block;
+            background-color: #f0f2f5;
+            color: #606266;
+            padding: 2px 8px;
+            border-radius: 4px;
+            margin: 2px;
+            font-size: 12px;
+        }
+        .monthly-report {
+            border-left: 4px solid #409eff;
+            padding-left: 15px;
+            margin: 20px 0;
+        }
+        .weekly-report {
+            border-left: 4px solid #67c23a;
+            padding-left: 15px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>IPO审核动态查询系统</h1>
+        <p>专业的IPO审核数据分析与报告平台</p>
+    </div>
+
+    <div id="app">
+        <div class="container">
+            <!-- 导航标签 -->
+            <div class="nav-tabs">
+                <el-tabs v-model="activeTab" @tab-click="handleTabClick">
+                    <el-tab-pane label="📊 月度专项报告" name="monthly"></el-tab-pane>
+                    <el-tab-pane label="📈 周报统计" name="weekly"></el-tab-pane>
+                    <el-tab-pane label="📋 案例数据库" name="cases"></el-tab-pane>
+                </el-tabs>
+            </div>
+
+            <!-- 内容区域 -->
+            <div class="content-area">
+                <!-- 月度专项报告 -->
+                <div v-if="activeTab === 'monthly'">
+                    <h2>月度IPO审核专项报告</h2>
+                    <div class="search-box">
+                        <el-input
+                            v-model="monthSearch"
+                            placeholder="搜索月份或关键词..."
+                            prefix-icon="el-icon-search"
+                            @input="searchMonthlyReports">
+                        </el-input>
+                    </div>
+                    <div v-for="report in filteredMonthlyReports" :key="report.id" class="monthly-report">
+                        <h3>{{ report.year_month }} 月度报告</h3>
+                        <el-row :gutter="20">
+                            <el-col :span="8">
+                                <el-card>
+                                    <div slot="header">审核统计</div>
+                                    <div>总申请数量: {{ report.total_applications }}</div>
+                                    <div>通过数量: {{ report.approved }}</div>
+                                    <div>拒绝数量: {{ report.rejected }}</div>
+                                    <div>撤回数量: {{ report.withdrawn }}</div>
+                                </el-card>
+                            </el-col>
+                            <el-col :span="16">
+                                <el-card>
+                                    <div slot="header">深度分析</div>
+                                    <div>{{ report.analysis_text }}</div>
+                                    <div slot="header">趋势分析</div>
+                                    <div class="chart-container">
+                                        <div id="monthlyChart{{report.id}}" style="height: 300px;"></div>
+                                    </div>
+                                </el-card>
+                            </el-col>
+                        </el-row>
+                    </div>
+                </div>
+
+                <!-- 周报统计 -->
+                <div v-if="activeTab === 'weekly'">
+                    <h2>IPO审核周报统计</h2>
+                    <div class="search-box">
+                        <el-input
+                            v-model="weekSearch"
+                            placeholder="搜索周次或关键词..."
+                            prefix-icon="el-icon-search"
+                            @input="searchWeeklyReports">
+                        </el-input>
+                    </div>
+                    <div v-for="report in filteredWeeklyReports" :key="report.id" class="weekly-report">
+                        <h3>{{ report.year_week }} 周报</h3>
+                        <el-row :gutter="20">
+                            <el-col :span="12">
+                                <el-card>
+                                    <div slot="header">数据统计</div>
+                                    <div>申请数量: {{ report.applications_count }}</div>
+                                    <div>关键词分析:</div>
+                                    <div>
+                                        <span v-for="keyword in JSON.parse(report.keyword_stats || '{}')" :key="keyword.name" class="keyword-tag">
+                                            {{ keyword.name }} ({{ keyword.count }})
+                                        </span>
+                                    </div>
+                                </el-card>
+                            </el-col>
+                            <el-col :span="12">
+                                <div class="chart-container">
+                                    <div id="weeklyChart{{report.id}}" style="height: 300px;"></div>
+                                </div>
+                            </el-col>
+                        </el-row>
+                        <div slot="header">简要分析</div>
+                        <div>{{ report.summary_text }}</div>
+                    </div>
+                </div>
+
+                <!-- 案例数据库 -->
+                <div v-if="activeTab === 'cases'">
+                    <h2>真实案例数据库</h2>
+                    <div class="search-box">
+                        <el-row :gutter="20">
+                            <el-col :span="8">
+                                <el-input
+                                    v-model="caseSearch"
+                                    placeholder="搜索公司名称、关键词..."
+                                    prefix-icon="el-icon-search"
+                                    @input="searchCases">
+                                </el-input>
+                            </el-col>
+                            <el-col :span="4">
+                                <el-select v-model="selectedIndustry" placeholder="行业筛选" @change="filterCases">
+                                    <el-option label="全部行业" value=""></el-option>
+                                    <el-option label="科技" value="科技"></el-option>
+                                    <el-option label="制造业" value="制造业"></el-option>
+                                    <el-option label="新能源" value="新能源"></el-option>
+                                    <el-option label="金融" value="金融"></el-option>
+                                </el-select>
+                            </el-col>
+                            <el-col :span="4">
+                                <el-select v-model="selectedStatus" placeholder="审核状态" @change="filterCases">
+                                    <el-option label="全部状态" value=""></el-option>
+                                    <el-option label="已通过" value="已通过"></el-option>
+                                    <el-option label="已拒绝" value="已拒绝"></el-option>
+                                    <el-option label="审核中" value="审核中"></el-option>
+                                </el-select>
+                            </el-col>
+                        </el-row>
+                    </div>
+                    
+                    <div v-if="filteredCases.length === 0">
+                        <el-empty description="暂无符合条件的案例"></el-empty>
+                    </div>
+                    
+                    <div v-else>
+                        <div v-for="case in filteredCases" :key="case.id" class="case-item">
+                            <div class="case-header">
+                                <h3>{{ case.company_name }}</h3>
+                                <span class="status-badge" :class="getStatusClass(case.review_status)">
+                                    {{ case.review_status }}
+                                </span>
+                            </div>
+                            <div class="case-details">
+                                <p><strong>股票代码:</strong> {{ case.stock_code }}</p>
+                                <p><strong>所属行业:</strong> {{ case.industry }}</p>
+                                <p><strong>申请日期:</strong> {{ case.application_date }}</p>
+                                <p><strong>审核时长:</strong> {{ case.audit_time }} 天</p>
+                                <p><strong>关键词:</strong></p>
+                                <div>
+                                    <span v-for="keyword in case.key_words.split(',')" :key="keyword" class="keyword-tag">
+                                        {{ keyword }}
+                                    </span>
+                                </div>
+                                <p><strong>详细说明:</strong> {{ case.detailed_info }}</p>
+                                <p v-if="case.rejection_reason"><strong>拒绝原因:</strong> {{ case.rejection_reason }}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/vue@2.6.14/dist/vue.js"></script>
+    <script src="https://unpkg.com/element-ui/lib/index.js"></script>
+    <script src="https://unpkg.com/echarts@5.4.3/dist/echarts.min.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>

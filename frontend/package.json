@@ -1,0 +1,18 @@
+{
+  "name": "ipo-audit-frontend",
+  "version": "1.0.0",
+  "description": "IPO审核动态查询系统前端应用",
+  "main": "index.html",
+  "scripts": {
+    "start": "python -m http.server 8080",
+    "dev": "python -m http.server 8080"
+  },
+  "dependencies": {
+    "vue": "^2.6.14",
+    "element-ui": "^2.15.13",
+    "echarts": "^5.4.3"
+  },
+  "keywords": ["ipo", "audit", "frontend"],
+  "author": "熊总团队",
+  "license": "MIT"
+}
