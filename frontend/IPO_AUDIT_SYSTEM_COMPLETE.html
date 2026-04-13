@@ -1,0 +1,847 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IPO审核动态查询系统 - 完整版</title>
+    <link rel="stylesheet" href="https://unpkg.com/element-ui/lib/theme-chalk/index.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Microsoft YaHei', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #e8ecf1 100%);
+            min-height: 100vh;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px 20px;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+            animation: pulse 15s ease-in-out infinite;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 0.5; }
+            50% { transform: scale(1.1); opacity: 0.8; }
+            100% { transform: scale(1); opacity: 0.5; }
+        }
+        
+        .header h1 {
+            font-size: 2.8em;
+            font-weight: 700;
+            margin: 0 0 10px 0;
+            position: relative;
+            z-index: 1;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+            letter-spacing: 1px;
+        }
+        
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.95;
+            position: relative;
+            z-index: 1;
+            font-weight: 300;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .nav-tabs {
+            background: white;
+            border-radius: 12px;
+            padding: 20px 30px;
+            margin-bottom: 25px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            position: relative;
+            z-index: 1;
+        }
+        
+        .content-area {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            min-height: 600px;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .el-tabs__nav-wrap::after {
+            background-color: #409eff !important;
+        }
+        
+        .el-tabs__item {
+            font-size: 16px !important;
+            font-weight: 500;
+            padding: 0 25px !important;
+            height: 55px !important;
+            line-height: 55px !important;
+        }
+        
+        .search-box {
+            margin: 25px 0;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border-left: 4px solid #409eff;
+        }
+        
+        .case-item {
+            border: 1px solid #e4e7ed;
+            border-radius: 10px;
+            padding: 25px;
+            margin-bottom: 20px;
+            transition: all 0.3s ease;
+            background: white;
+        }
+        
+        .case-item:hover {
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+            transform: translateY(-2px);
+            border-color: #409eff;
+        }
+        
+        .case-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        
+        .case-header h3 {
+            font-size: 1.5em;
+            color: #303133;
+            margin: 0;
+        }
+        
+        .status-badge {
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: bold;
+            color: white;
+        }
+        
+        .status-approved {
+            background: linear-gradient(135deg, #67c23a 0%, #85ce61 100%);
+        }
+        
+        .status-rejected {
+            background: linear-gradient(135deg, #f56c6c 0%, #f78989 100%);
+        }
+        
+        .status-reviewing {
+            background: linear-gradient(135deg, #e6a23c 0%, #ebb563 100%);
+        }
+        
+        .case-details p {
+            margin: 10px 0;
+            color: #606266;
+            line-height: 1.8;
+        }
+        
+        .case-details strong {
+            color: #303133;
+            font-weight: 600;
+        }
+        
+        .keyword-tag {
+            display: inline-block;
+            background: linear-gradient(135deg, #f0f2f5 0%, #e8e8e8 100%);
+            color: #606266;
+            padding: 6px 12px;
+            border-radius: 6px;
+            margin: 4px;
+            font-size: 13px;
+            border: 1px solid #e4e7ed;
+        }
+        
+        .monthly-report {
+            border-left: 5px solid #409eff;
+            padding-left: 25px;
+            margin: 25px 0;
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 25px;
+        }
+        
+        .monthly-report h3 {
+            color: #409eff;
+            margin-bottom: 20px;
+            font-size: 1.3em;
+        }
+        
+        .weekly-report {
+            border-left: 5px solid #67c23a;
+            padding-left: 25px;
+            margin: 25px 0;
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 25px;
+        }
+        
+        .weekly-report h3 {
+            color: #67c23a;
+            margin-bottom: 20px;
+            font-size: 1.3em;
+        }
+        
+        .chart-container {
+            height: 400px;
+            margin: 25px 0;
+            background: white;
+            border-radius: 8px;
+            padding: 15px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+        
+        .el-card {
+            border-radius: 10px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+            margin-bottom: 20px;
+        }
+        
+        .el-card__header {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e8e8e8 100%);
+            border-radius: 10px 10px 0 0;
+            padding: 15px 20px;
+            font-weight: 600;
+            color: #303133;
+        }
+        
+        .notice {
+            background: linear-gradient(135deg, #fff9e6 0%, #fff3d9 100%);
+            border: 1px solid #ffe58f;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+            color: #d48806;
+            border-left: 4px solid #e6a23c;
+        }
+        
+        .el-row {
+            margin-bottom: 25px;
+        }
+        
+        .el-col {
+            padding: 10px;
+        }
+        
+        .el-empty {
+            padding: 60px 20px;
+        }
+        
+        .el-input__inner {
+            border-radius: 8px;
+            height: 45px;
+        }
+        
+        .el-select {
+            width: 100%;
+        }
+        
+        h2 {
+            color: #303133;
+            margin-bottom: 25px;
+            font-size: 1.8em;
+            font-weight: 600;
+        }
+        
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2em;
+            }
+            
+            .header p {
+                font-size: 1em;
+            }
+            
+            .container {
+                padding: 15px;
+            }
+            
+            .nav-tabs,
+            .content-area {
+                padding: 15px;
+                border-radius: 8px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>📊 IPO审核动态查询系统</h1>
+        <p>专业的IPO审核数据分析与报告平台</p>
+    </div>
+
+    <div id="app">
+        <div class="container">
+            <!-- 导航标签 -->
+            <div class="nav-tabs">
+                <el-tabs v-model="activeTab" @tab-click="handleTabClick">
+                    <el-tab-pane label="📊 月度专项报告" name="monthly"></el-tab-pane>
+                    <el-tab-pane label="📈 周报统计" name="weekly"></el-tab-pane>
+                    <el-tab-pane label="📋 案例数据库" name="cases"></el-tab-pane>
+                </el-tabs>
+            </div>
+
+            <!-- 内容区域 -->
+            <div class="content-area">
+                <div class="notice">
+                    📌 <strong>系统说明</strong>：这是IPO审核动态查询系统完整版，包含月度专项报告、周报统计和案例数据库三大核心功能。
+                </div>
+
+                <!-- 月度专项报告 -->
+                <div v-if="activeTab === 'monthly'">
+                    <h2>月度IPO审核专项报告</h2>
+                    <div class="search-box">
+                        <el-input
+                            v-model="monthSearch"
+                            placeholder="搜索月份或关键词..."
+                            prefix-icon="el-icon-search"
+                            @input="searchMonthlyReports">
+                        </el-input>
+                    </div>
+                    <div v-for="report in filteredMonthlyReports" :key="report.id" class="monthly-report">
+                        <h3>📅 {{ report.year_month }} 月度报告</h3>
+                        <el-row :gutter="20">
+                            <el-col :span="8">
+                                <el-card>
+                                    <div slot="header">📊 审核统计</div>
+                                    <div style="margin: 15px 0;">
+                                        <p style="font-size: 16px;"><strong>总申请数量:</strong> {{ report.total_applications }}</p>
+                                        <p style="font-size: 16px; color: #67c23a;"><strong>通过数量:</strong> {{ report.approved }}</p>
+                                        <p style="font-size: 16px; color: #f56c6c;"><strong>拒绝数量:</strong> {{ report.rejected }}</p>
+                                        <p style="font-size: 16px; color: #e6a23c;"><strong>撤回数量:</strong> {{ report.withdrawn }}</p>
+                                    </div>
+                                </el-card>
+                            </el-col>
+                            <el-col :span="16">
+                                <el-card>
+                                    <div slot="header">📈 深度分析</div>
+                                    <div style="white-space: pre-line; line-height: 1.8; color: #606266;">{{ report.analysis_text }}</div>
+                                    <div slot="header">📉 趋势分析</div>
+                                    <div class="chart-container">
+                                        <div :id="'monthlyChart' + report.id" style="height: 350px;"></div>
+                                    </div>
+                                </el-card>
+                            </el-col>
+                        </el-row>
+                    </div>
+                </div>
+
+                <!-- 周报统计 -->
+                <div v-if="activeTab === 'weekly'">
+                    <h2>IPO审核周报统计</h2>
+                    <div class="search-box">
+                        <el-input
+                            v-model="weekSearch"
+                            placeholder="搜索周次或关键词..."
+                            prefix-icon="el-icon-search"
+                            @input="searchWeeklyReports">
+                        </el-input>
+                    </div>
+                    <div v-for="report in filteredWeeklyReports" :key="report.id" class="weekly-report">
+                        <h3>📅 {{ report.year_week }} 周报</h3>
+                        <el-row :gutter="20">
+                            <el-col :span="12">
+                                <el-card>
+                                    <div slot="header">📊 数据统计</div>
+                                    <div style="margin: 20px 0;">
+                                        <p style="font-size: 18px; margin-bottom: 15px;"><strong>申请数量:</strong> <span style="font-size: 24px; color: #409eff; font-weight: bold;">{{ report.applications_count }}</span></p>
+                                        <p style="margin-bottom: 10px;"><strong>关键词分析:</strong></p>
+                                        <div style="margin: 10px 0;">
+                                            <span v-for="keyword in report.keywords" :key="keyword.name" class="keyword-tag">
+                                                {{ keyword.name }} ({{ keyword.count }})
+                                            </span>
+                                        </div>
+                                    </div>
+                                </el-card>
+                            </el-col>
+                            <el-col :span="12">
+                                <div class="chart-container">
+                                    <div :id="'weeklyChart' + report.id" style="height: 350px;"></div>
+                                </div>
+                            </el-col>
+                        </el-row>
+                        <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-top: 20px;">
+                            <strong style="color: #409eff; font-size: 16px;">📝 简要分析:</strong>
+                            <div style="margin-top: 10px; line-height: 1.8; color: #606266;">{{ report.summary_text }}</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 案例数据库 -->
+                <div v-if="activeTab === 'cases'">
+                    <h2>📋 真实案例数据库</h2>
+                    <div class="search-box">
+                        <el-row :gutter="20">
+                            <el-col :span="10">
+                                <el-input
+                                    v-model="caseSearch"
+                                    placeholder="🔍 搜索公司名称、关键词..."
+                                    prefix-icon="el-icon-search"
+                                    @input="searchCases">
+                                </el-input>
+                            </el-col>
+                            <el-col :span="5">
+                                <el-select v-model="selectedIndustry" placeholder="🏢 行业筛选" @change="filterCases">
+                                    <el-option label="全部行业" value=""></el-option>
+                                    <el-option label="🔬 科技" value="科技"></el-option>
+                                    <el-option label="🏭 制造业" value="制造业"></el-option>
+                                    <el-option label="⚡ 新能源" value="新能源"></el-option>
+                                </el-select>
+                            </el-col>
+                            <el-col :span="5">
+                                <el-select v-model="selectedStatus" placeholder="📌 审核状态" @change="filterCases">
+                                    <el-option label="全部状态" value=""></el-option>
+                                    <el-option label="✅ 已通过" value="已通过"></el-option>
+                                    <el-option label="❌ 已拒绝" value="已拒绝"></el-option>
+                                    <el-option label="⏳ 审核中" value="审核中"></el-option>
+                                </el-select>
+                            </el-col>
+                        </el-row>
+                    </div>
+                    
+                    <div v-if="filteredCases.length === 0">
+                        <el-empty description="🔍 暂无符合条件的案例"></el-empty>
+                    </div>
+                    
+                    <div v-else>
+                        <div v-for="case in filteredCases" :key="case.id" class="case-item">
+                            <div class="case-header">
+                                <h3>{{ case.company_name }}</h3>
+                                <span class="status-badge" :class="getStatusClass(case.review_status)">
+                                    {{ case.review_status }}
+                                </span>
+                            </div>
+                            <div class="case-details">
+                                <p><strong>📈 股票代码:</strong> {{ case.stock_code }}</p>
+                                <p><strong>🏢 所属行业:</strong> {{ case.industry }}</p>
+                                <p><strong>📅 申请日期:</strong> {{ case.application_date }}</p>
+                                <p><strong>⏱️ 审核时长:</strong> {{ case.audit_time }} 天</p>
+                                <p><strong>🏷️ 关键词:</strong></p>
+                                <div style="margin: 8px 0;">
+                                    <span v-for="keyword in case.key_words.split(',')" :key="keyword" class="keyword-tag">
+                                        {{ keyword }}
+                                    </span>
+                                </div>
+                                <p><strong>📝 详细说明:</strong> {{ case.detailed_info }}</p>
+                                <p v-if="case.rejection_reason"><strong>⚠️ 拒绝原因:</strong> <span style="color: #f56c6c;">{{ case.rejection_reason }}</span></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/vue@2.6.14/dist/vue.js"></script>
+    <script src="https://unpkg.com/element-ui/lib/index.js"></script>
+    <script src="https://unpkg.com/echarts@5.4.3/dist/echarts.min.js"></script>
+    <script>
+        // 内嵌数据
+        const EMBEDDED_DATA = {
+            monthlyReports: [
+                {
+                    id: 1,
+                    year_month: '2024年3月',
+                    total_applications: 45,
+                    approved: 28,
+                    rejected: 12,
+                    withdrawn: 5,
+                    key_trends: '科技行业IPO申请持续增长，审核趋严',
+                    analysis_text: '本月IPO审核呈现以下特点：\n1）科技行业占比达到60%，持续领先；\n2）审核通过率62%，较上月下降5个百分点；\n3）拒绝主要集中在财务数据和信息披露问题；\n4）新能源行业表现突出，申请数量环比增长30%。'
+                },
+                {
+                    id: 2,
+                    year_month: '2024年2月',
+                    total_applications: 38,
+                    approved: 25,
+                    rejected: 8,
+                    withdrawn: 5,
+                    key_trends: '制造业IPO回暖，审核效率提升',
+                    analysis_text: '二月IPO市场表现积极：\n1）制造业IPO申请数量回升至30%；\n2）平均审核时长缩短至85天；\n3）通过率达到65.8%，创年内新高；\n4）生物医药行业表现亮眼，3家企业成功过会。'
+                }
+            ],
+            weeklyReports: [
+                {
+                    id: 1,
+                    week_number: 11,
+                    year_week: '2024年第11周',
+                    applications_count: 12,
+                    keywords: [
+                        { name: '科技创新', count: 8 },
+                        { name: '财务规范', count: 6 },
+                        { name: '行业前景', count: 5 },
+                        { name: '估值合理', count: 4 },
+                        { name: '成长性', count: 3 }
+                    ],
+                    summary_text: '本周IPO申请以科技企业为主，8家企业来自人工智能、云计算等新兴领域。审核重点集中在技术创新能力和商业模式的可持续性。'
+                },
+                {
+                    id: 2,
+                    week_number: 10,
+                    year_week: '2024年第10周',
+                    applications_count: 15,
+                    keywords: [
+                        { name: '新能源', count: 7 },
+                        { name: '绿色发展', count: 6 },
+                        { name: '政策支持', count: 5 },
+                        { name: '技术壁垒', count: 4 },
+                        { name: '市场前景', count: 3 }
+                    ],
+                    summary_text: '本周新能源行业IPO申请活跃，占比达到47%。审核关注政策合规性和技术成熟度，3家光伏企业获得重点关注。'
+                }
+            ],
+            cases: [
+                {
+                    id: 1,
+                    company_name: '科技创新股份有限公司',
+                    stock_code: '300001',
+                    industry: '科技',
+                    application_date: '2024-01-15',
+                    review_status: '已通过',
+                    result: '上市成功',
+                    rejection_reason: null,
+                    audit_time: 120,
+                    key_words: '科技创新,人工智能,科创板',
+                    detailed_info: '专注于人工智能技术研发，拥有多项核心专利技术。公司营收连续三年保持50%以上增长，毛利率超过70%。审核过程中重点关注技术壁垒和商业模式的可持续性。'
+                },
+                {
+                    id: 2,
+                    company_name: '传统制造集团有限公司',
+                    stock_code: '600002',
+                    industry: '制造业',
+                    application_date: '2024-01-20',
+                    review_status: '已拒绝',
+                    result: '未通过',
+                    rejection_reason: '财务数据不透明，盈利能力不足',
+                    audit_time: 90,
+                    key_words: '传统制造,产能过剩,财务问题',
+                    detailed_info: '传统制造业企业，面临转型升级压力。公司营收增长缓慢，毛利率低于行业平均水平，应收账款周转率较差。'
+                },
+                {
+                    id: 3,
+                    company_name: '新能源科技发展有限公司',
+                    stock_code: '300003',
+                    industry: '新能源',
+                    application_date: '2024-02-01',
+                    review_status: '审核中',
+                    result: null,
+                    rejection_reason: null,
+                    audit_time: 60,
+                    key_words: '新能源,清洁能源,碳中和',
+                    detailed_info: '专注于新能源技术研发和应用，市场前景良好。公司拥有自主研发技术，在光伏领域处于行业领先地位。目前正在等待证监会审核反馈。'
+                }
+            ]
+        };
+
+        new Vue({
+            el: '#app',
+            data: {
+                activeTab: 'monthly',
+                monthlyReports: EMBEDDED_DATA.monthlyReports,
+                weeklyReports: EMBEDDED_DATA.weeklyReports,
+                cases: EMBEDDED_DATA.cases,
+                filteredMonthlyReports: EMBEDDED_DATA.monthlyReports,
+                filteredWeeklyReports: EMBEDDED_DATA.weeklyReports,
+                filteredCases: EMBEDDED_DATA.cases,
+                
+                monthSearch: '',
+                weekSearch: '',
+                caseSearch: '',
+                selectedIndustry: '',
+                selectedStatus: '',
+                charts: {}
+            },
+            mounted() {
+                this.$nextTick(() => {
+                    this.renderCharts();
+                });
+                
+                // 监听窗口大小变化，重新渲染图表
+                window.addEventListener('resize', this.handleResize);
+            },
+            beforeDestroy() {
+                window.removeEventListener('resize', this.handleResize);
+                // 销毁所有图表实例
+                Object.values(this.charts).forEach(chart => {
+                    if (chart) {
+                        chart.dispose();
+                    }
+                });
+            },
+            methods: {
+                handleTabClick() {
+                    this.$nextTick(() => {
+                        this.renderCharts();
+                    });
+                },
+                handleResize() {
+                    Object.values(this.charts).forEach(chart => {
+                        if (chart) {
+                            chart.resize();
+                        }
+                    });
+                },
+                searchMonthlyReports() {
+                    if (!this.monthSearch) {
+                        this.filteredMonthlyReports = this.monthlyReports;
+                    } else {
+                        this.filteredMonthlyReports = this.monthlyReports.filter(report => 
+                            report.year_month.includes(this.monthSearch) ||
+                            report.analysis_text.includes(this.monthSearch) ||
+                            report.key_trends.includes(this.monthSearch)
+                        );
+                    }
+                },
+                searchWeeklyReports() {
+                    if (!this.weekSearch) {
+                        this.filteredWeeklyReports = this.weeklyReports;
+                    } else {
+                        this.filteredWeeklyReports = this.weeklyReports.filter(report => 
+                            report.year_week.includes(this.weekSearch) ||
+                            report.summary_text.includes(this.weekSearch)
+                        );
+                    }
+                },
+                searchCases() {
+                    this.filterCases();
+                },
+                filterCases() {
+                    let filtered = this.cases;
+                    
+                    if (this.caseSearch) {
+                        const searchTerm = this.caseSearch.toLowerCase();
+                        filtered = filtered.filter(caseItem => 
+                            caseItem.company_name.toLowerCase().includes(searchTerm) ||
+                            caseItem.key_words.toLowerCase().includes(searchTerm) ||
+                            caseItem.detailed_info.toLowerCase().includes(searchTerm)
+                        );
+                    }
+                    
+                    if (this.selectedIndustry) {
+                        filtered = filtered.filter(caseItem => 
+                            caseItem.industry === this.selectedIndustry
+                        );
+                    }
+                    
+                    if (this.selectedStatus) {
+                        filtered = filtered.filter(caseItem => 
+                            caseItem.review_status === this.selectedStatus
+                        );
+                    }
+                    
+                    this.filteredCases = filtered;
+                },
+                getStatusClass(status) {
+                    switch(status) {
+                        case '已通过': return 'status-approved';
+                        case '已拒绝': return 'status-rejected';
+                        case '审核中': return 'status-reviewing';
+                        default: return '';
+                    }
+                },
+                renderCharts() {
+                    // 销毁旧图表
+                    Object.values(this.charts).forEach(chart => {
+                        if (chart) {
+                            chart.dispose();
+                        }
+                    });
+                    this.charts = {};
+                    
+                    // 渲染月度报告图表
+                    this.filteredMonthlyReports.forEach(report => {
+                        const chartId = 'monthlyChart' + report.id;
+                        const chartElement = document.getElementById(chartId);
+                        if (chartElement) {
+                            const chart = echarts.init(chartElement);
+                            const option = {
+                                title: {
+                                    text: report.year_month + ' IPO审核统计',
+                                    left: 'center',
+                                    textStyle: {
+                                        fontSize: 16,
+                                        fontWeight: 'bold',
+                                        color: '#303133'
+                                    }
+                                },
+                                tooltip: {
+                                    trigger: 'axis',
+                                    axisPointer: {
+                                        type: 'shadow'
+                                    },
+                                    formatter: function(params) {
+                                        const labels = ['申请', '通过', '拒绝', '撤回'];
+                                        return labels[params.dataIndex] + ': ' + params.value + '家';
+                                    }
+                                },
+                                grid: {
+                                    left: '3%',
+                                    right: '4%',
+                                    bottom: '3%',
+                                    containLabel: true
+                                },
+                                xAxis: {
+                                    type: 'category',
+                                    data: ['申请', '通过', '拒绝', '撤回'],
+                                    axisLabel: {
+                                        fontSize: 14,
+                                        color: '#606266'
+                                    }
+                                },
+                                yAxis: {
+                                    type: 'value',
+                                    axisLabel: {
+                                        fontSize: 14,
+                                        color: '#606266'
+                                    }
+                                },
+                                series: [{
+                                    data: [
+                                        report.total_applications,
+                                        report.approved,
+                                        report.rejected,
+                                        report.withdrawn
+                                    ],
+                                    type: 'bar',
+                                    barWidth: '50%',
+                                    itemStyle: {
+                                        borderRadius: [8, 8, 0, 0],
+                                        color: function(params) {
+                                            const colors = [
+                                                new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                                                    {offset: 0, color: '#409eff'},
+                                                    {offset: 1, color: '#66b1ff'}
+                                                ]),
+                                                new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                                                    {offset: 0, color: '#67c23a'},
+                                                    {offset: 1, color: '#85ce61'}
+                                                ]),
+                                                new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                                                    {offset: 0, color: '#f56c6c'},
+                                                    {offset: 1, color: '#f78989'}
+                                                ]),
+                                                new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                                                    {offset: 0, color: '#e6a23c'},
+                                                    {offset: 1, color: '#ebb563'}
+                                                ])
+                                            ];
+                                            return colors[params.dataIndex];
+                                        }
+                                    },
+                                    label: {
+                                        show: true,
+                                        position: 'top',
+                                        fontSize: 14,
+                                        fontWeight: 'bold',
+                                        color: '#303133'
+                                    }
+                                }]
+                            };
+                            chart.setOption(option);
+                            this.charts[chartId] = chart;
+                        }
+                    });
+                    
+                    // 渲染周报图表
+                    this.filteredWeeklyReports.forEach(report => {
+                        const chartId = 'weeklyChart' + report.id;
+                        const chartElement = document.getElementById(chartId);
+                        if (chartElement) {
+                            const chart = echarts.init(chartElement);
+                            const option = {
+                                title: {
+                                    text: report.year_week + ' 关键词统计',
+                                    left: 'center',
+                                    textStyle: {
+                                        fontSize: 16,
+                                        fontWeight: 'bold',
+                                        color: '#303133'
+                                    }
+                                },
+                                tooltip: {
+                                    trigger: 'item',
+                                    formatter: '{a} <br/>{b}: {c} ({d}%)'
+                                },
+                                legend: {
+                                    orient: 'vertical',
+                                    left: 'left',
+                                    textStyle: {
+                                        fontSize: 13
+                                    }
+                                },
+                                series: [{
+                                    type: 'pie',
+                                    radius: ['40%', '70%'],
+                                    avoidLabelOverlap: false,
+                                    itemStyle: {
+                                        borderRadius: 10,
+                                        borderColor: '#fff',
+                                        borderWidth: 2
+                                    },
+                                    label: {
+                                        show: false,
+                                        position: 'center'
+                                    },
+                                    emphasis: {
+                                        label: {
+                                            show: true,
+                                            fontSize: 18,
+                                            fontWeight: 'bold',
+                                            formatter: '{b}: {c} ({d}%)'
+                                        }
+                                    },
+                                    labelLine: {
+                                        show: false
+                                    },
+                                    data: report.keywords.map(k => ({
+                                        name: k.name,
+                                        value: k.count,
+                                        itemStyle: {
+                                            color: function(params) {
+                                                const colors = ['#5470c6', '#91cc75', '#fac858', '#ee6666', '#73c0de', '#3ba272'];
+                                                return colors[params.dataIndex % colors.length];
+                                            }
+                                        }
+                                    }))
+                                }]
+                            };
+                            chart.setOption(option);
+                            this.charts[chartId] = chart;
+                        }
+                    });
+                }
+            }
+        });
+    </script>
+</body>
+</html>
